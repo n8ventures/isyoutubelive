@@ -23,7 +23,7 @@ async function checkLive(channelID) {
 		const canonical = $('link[rel="canonical"]').attr('href');
 		const title = $('meta[name="title"]').attr('content');
 		const isLiveBroadcast =
-			$('meta[itemprop="isLiveBroadcast"]').attr('content').toLowerCase() === 'true';
+			$('meta[itemprop="isLiveBroadcast"]')?.attr('content')?.toLowerCase() === 'true';
 		const startDate = $('meta[itemprop="startDate"]').attr('content');
 
 		if (canonical?.startsWith('https://www.youtube.com/watch?v') && isLiveBroadcast) {
