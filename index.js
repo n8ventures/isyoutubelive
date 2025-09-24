@@ -1,34 +1,63 @@
-const cheerio = require('cheerio')
-const needle = require('needle')
-module.exports = async function checklive(channelID) {
-    
-    
-    let yt_url = `https://www.youtube.com/channel/${channelID}/live`
-    
-    
+const cheerio = require('cheerio');
+const needle = require('needle');
+
+async function checkLive(channelID) {
+    let yt_url;
+
+    if (channelID.startsWith('@')) {
+        yt_url = `https://www.youtube.com/${channelID}/live`;
+    }
+    else {
+        yt_url = `https://www.youtube.com/channel/${channelID}/live`;
+    }
+
+
     const response = {
         is_live: false,
         title: null,
-        url: null
-    }
+        url: null,
+    };
+
     try {
-    let res = await needle('get', encodeURI(yt_url), { follow_max: 3})
+        const res = await needle('get', encodeURI(yt_url), { follow_max: 3 });
+        const $ = cheerio.load(res.body);
 
-        let $ = cheerio.load(res.body);
-        if ($('link[rel="canonical"]').attr('href')) {
-            response.url = $('link[rel="canonical"]').attr('href');
-            response.title = $('meta[name="title"]').attr('content');
-            response.is_live = response.url.startsWith("https://www.youtube.com/watch?v") ? true : false;
+        const canonical = $('link[rel="canonical"]').attr('href');
+        const title = $('meta[name="title"]').attr('content');
+        const isLiveBroadcast = $('meta[itemprop="isLiveBroadcast"]').attr('content') === 'true';
+        const startDate = $('meta[itemprop="startDate"]').attr('content');
 
-        } else {
-            response.is_live = false;
-            response.title = "API ERROR";
-            response.url = "API ERROR";
+        if (canonical?.startsWith('https://www.youtube.com/watch?v') && isLiveBroadcast) {
+            const startTime = startDate ? new Date(startDate) : null;
+            const now = new Date();
+
+            if (startTime && startTime > now) {
+                response.is_live = false;
+                response.title = title;
+                response.url = canonical;
+            }
+            else {
+                response.is_live = true;
+                response.title = title;
+                response.url = canonical;
+            }
         }
-        return response;
+        else {
+            response.is_live = false;
+            response.title = title || 'Not live';
+            response.url = canonical || null;
+        }
 
-} catch (error) {
-    console.log(error);
+        return response;
+    }
+    catch (error) {
+        console.error('[YT CHECK ERROR]', error);
+        return {
+            is_live: false,
+            title: 'API ERROR',
+            url: null,
+        };
+    }
 }
 
-};
+module.exports = checkLive;
