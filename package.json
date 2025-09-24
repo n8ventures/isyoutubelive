@@ -1,23 +1,23 @@
 {
-  "name": "isyoutubelive",
-  "version": "1.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/amith-vp/isyoutubelive.git"
-  },
-  "author": "amith",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/amith-vp/isyoutubelive/issues"
-  },
-  "homepage": "https://github.com/amith-vp/isyoutubelive#readme",
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.10",
-    "needle": "^2.8.0"
-  }
+	"name": "isyoutubelive",
+	"version": "1.1.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/amith-vp/isyoutubelive.git"
+	},
+	"author": "amith",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/amith-vp/isyoutubelive/issues"
+	},
+	"homepage": "https://github.com/amith-vp/isyoutubelive#readme",
+	"dependencies": {
+		"cheerio": "^1.1.2",
+		"needle": "^2.9.1"
+	}
 }
