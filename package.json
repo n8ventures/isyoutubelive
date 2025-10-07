@@ -1,23 +1,40 @@
 {
-	"name": "isyoutubelive",
-	"version": "1.1.0",
-	"description": "",
+	"name": "@n8ventures/isyoutubelive",
+	"version": "1.0.0",
+	"description": "A simple Node.js module to check if a YouTube channel is live or get its latest uploaded video without using YouTube API.",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/amith-vp/isyoutubelive.git"
+		"url": "git+https://github.com/n8ventures/isyoutubelive.git"
 	},
-	"author": "amith",
-	"license": "ISC",
+	"author": {
+		"name": "N8",
+		"url": "https://github.com/n8ventures"
+	},
+	"contributors": [
+		{
+			"name": "Amith",
+			"url": "https://github.com/amith-vp"
+		}
+	],
+	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/amith-vp/isyoutubelive/issues"
+		"url": "https://github.com/n8ventures/isyoutubelive/issues"
 	},
-	"homepage": "https://github.com/amith-vp/isyoutubelive#readme",
+	"homepage": "https://github.com/n8ventures/isyoutubelive#readme",
+	"keywords": [
+		"youtube",
+		"live",
+		"scraper",
+		"youtube-api",
+		"youtube-status",
+		"youtube-livestream"
+	],
 	"dependencies": {
 		"cheerio": "^1.1.2",
-		"needle": "^2.9.1"
+		"needle": "^3.3.1"
 	}
 }
