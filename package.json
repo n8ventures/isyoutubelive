@@ -36,5 +36,13 @@
 	"dependencies": {
 		"cheerio": "^1.1.2",
 		"needle": "^3.3.1"
-	}
+	},
+	"files": [
+		"index.js",
+		"checkLive.js",
+		"checkVideo.js",
+		"utils.js",
+		"README.md",
+		"LICENSE"
+	]
 }
