@@ -1,8 +1,8 @@
-![npm](https://img.shields.io/npm/dt/@n8ventures/isyoutubelive?style=flat-square)
-![npm version](https://img.shields.io/npm/v/@n8ventures/isyoutubelive?style=flat-square)
+![npm](https://img.shields.io/npm/dt/%40n8ventures%2Fisyoutubelive?style=flat-square)
+![npm version](https://img.shields.io/npm/v/%40n8ventures%2Fisyoutubelive?style=flat-square)
 ![GitHub issues](https://img.shields.io/github/issues/n8ventures/isyoutubelive?style=flat-square)
-![npm bundle size](https://img.shields.io/bundlephobia/min/@n8ventures/isyoutubelive?style=flat-square)
-![NPM License](https://img.shields.io/npm/l/@n8ventures/isyoutubelive?style=flat-square)
+![npm bundle size](https://img.shields.io/bundlephobia/min/%40n8ventures%2Fisyoutubelive?style=flat-square)
+![NPM License](https://img.shields.io/npm/l/%40n8ventures%2Fisyoutubelive?style=flat-square)
 
 
 <p align="center">
@@ -28,8 +28,6 @@ npm i @n8ventures/isyoutubelive
 ## :feet: Usage
 
 ```js
-const { checkLive, checkVideo } = require("@n8ventures/isyoutubelive")
-
 const channelID = '@LinusTechTips'; // Can be Channel ID, @Handle, YT URLs
 
 const liveData = await checkLive(channelID);
