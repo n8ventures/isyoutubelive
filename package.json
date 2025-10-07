@@ -44,6 +44,7 @@
 		"checkVideo.js",
 		"utils.js",
 		"README.md",
-		"LICENSE"
+		"LICENSE",
+		"index.d.ts"
 	]
 }
