@@ -28,6 +28,8 @@ npm i @n8ventures/isyoutubelive
 ## :feet: Usage
 
 ```js
+const { checkLive, checkVideo } = require("@n8ventures/isyoutubelive")
+
 const channelID = '@LinusTechTips'; // Can be Channel ID, @Handle, YT URLs
 
 const liveData = await checkLive(channelID);
