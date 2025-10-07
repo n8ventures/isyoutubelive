@@ -1,0 +1,48 @@
+const { buildYouTubeURL } = require('./utils');
+
+const cheerio = require('cheerio');
+const needle = require('needle');
+
+async function checkLive(channelID) {
+	const yt_url = buildYouTubeURL(channelID, 'live');
+
+	const response = {
+		is_live: false,
+		title: null,
+		url: null,
+	};
+
+	try {
+		const res = await needle('get', encodeURI(yt_url), { follow_max: 3 });
+		const $ = cheerio.load(res.body);
+
+		const canonical = $('link[rel="canonical"]').attr('href');
+		const title = $('meta[name="title"]').attr('content');
+		const isLiveBroadcast =
+			$('meta[itemprop="isLiveBroadcast"]')?.attr('content')?.toLowerCase() === 'true';
+		const startDate = $('meta[itemprop="startDate"]').attr('content');
+
+		if (canonical?.startsWith('https://www.youtube.com/watch?v') && isLiveBroadcast) {
+			const startTime = startDate ? new Date(startDate) : null;
+			const now = new Date();
+
+			response.is_live = !startTime || startTime <= now;
+			response.title = title;
+			response.url = canonical;
+		} else {
+			response.title = title || 'Not live';
+			response.url = canonical || null;
+		}
+
+		return response;
+	} catch (error) {
+		console.error('[YT CHECK ERROR]', error);
+		return {
+			is_live: false,
+			title: 'API ERROR',
+			url: null,
+		};
+	}
+}
+
+module.exports = checkLive;
