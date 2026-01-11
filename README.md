@@ -53,6 +53,15 @@ console.log('Latest Video:', videoData);
   title: string,
   url: string,
   publishedTime: string,
-  videoId: string
+  videoId: string,
+  isMembersOnly: boolean,
+  latestIsMembersOnly: boolean,
+  warning: string | null,
 } 
 ```
+
+Note, if you want the possibility of including Member's Only videos, you can use:
+```js
+await checkVideo(channelID, false);
+```
+It doesn't always work, but if you use it to ping every now and then, there's a chance those Member's Only Videos might pop up.
