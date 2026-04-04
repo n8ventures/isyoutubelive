@@ -1,22 +1,6 @@
-const { buildYouTubeURL } = require('./utils');
+const { buildYouTubeURL, isMembersOnly } = require('./utils');
 
 const needle = require('needle');
-
-function isMembersOnly(video) {
-	if (!video) return false;
-
-	return (
-		(video.badges ?? []).some(
-			(b) =>
-				b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_MEMBERS_ONLY' ||
-				b.metadataBadgeRenderer?.label === 'Members only',
-		) ||
-		(video.thumbnailOverlays ?? []).some(
-			(o) => o.thumbnailOverlayTimeStatusRenderer?.style === 'MEMBERS_ONLY',
-		) ||
-		video.publishedTimeText == null
-	);
-}
 
 async function checkVideo(channelID, public = true) {
 	const yt_url = buildYouTubeURL(channelID, 'videos');

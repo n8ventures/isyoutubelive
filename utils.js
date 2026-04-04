@@ -33,4 +33,20 @@ function buildYouTubeURL(channelID, type = 'videos') {
 	return `${base}/channel/${channelID}/${type}`;
 }
 
-module.exports = { buildYouTubeURL };
+function isMembersOnly(video) {
+	if (!video) return false;
+
+	return (
+		(video.badges ?? []).some(
+			(b) =>
+				b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_MEMBERS_ONLY' ||
+				b.metadataBadgeRenderer?.label === 'Members only',
+		) ||
+		(video.thumbnailOverlays ?? []).some(
+			(o) => o.thumbnailOverlayTimeStatusRenderer?.style === 'MEMBERS_ONLY',
+		) ||
+		video.publishedTimeText == null
+	);
+}
+
+module.exports = { buildYouTubeURL, isMembersOnly };
