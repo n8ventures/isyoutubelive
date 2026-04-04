@@ -42,6 +42,7 @@
 		"index.js",
 		"checkLive.js",
 		"checkVideo.js",
+		"checkShort.js",
 		"utils.js",
 		"README.md",
 		"LICENSE",
