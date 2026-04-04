@@ -15,7 +15,7 @@ Originally created by [Amith VP](https://github.com/amith-vp), maintained and ex
 NPM Module to check whether YouTube channel is live or not . WITHOUT YOUTUBE API KEY <br>
 Return object with live status, video title, video url.
 
-Now also returns latest YouTube channel upload with `checkVideo(channelID)`
+Now also returns latest YouTube channel upload with `checkVideo(channelID)` and latest YouTube short with `checkShort(channelID)`
 
 
 ## :floppy_disk: Installation
@@ -27,7 +27,7 @@ npm i @n8ventures/isyoutubelive
 ## :feet: Usage
 
 ```js
-const { checkLive, checkVideo } = require("@n8ventures/isyoutubelive")
+const { checkLive, checkVideo, checkShort } = require("@n8ventures/isyoutubelive")
 
 const channelID = '@LinusTechTips'; // Can be Channel ID, @Handle, YT URLs
 
@@ -36,6 +36,9 @@ console.log('Live Data:', liveData);
 
 const videoData = await checkVideo(channelID);
 console.log('Latest Video:', videoData);
+
+const shortData = await checkShort(channelID);
+console.log('Latest Short:', shortData);
 ```
 
 `checkLive()` returns 
@@ -60,8 +63,22 @@ console.log('Latest Video:', videoData);
 } 
 ```
 
-Note, if you want the possibility of including Member's Only videos, you can use:
+`checkShort()` returns the same structure as `checkVideo()`
+```js 
+{
+  title: string,
+  url: string,
+  publishedTime: string,
+  videoId: string,
+  isMembersOnly: boolean,
+  latestIsMembersOnly: boolean,
+  warning: string | null,
+} 
+```
+
+Note, if you want the possibility of including Member's Only videos/shorts, you can use:
 ```js
 await checkVideo(channelID, false);
+await checkShort(channelID, false);
 ```
-It doesn't always work, but if you use it to ping every now and then, there's a chance those Member's Only Videos might pop up.
+`public=false` meaning it should try to detect Member's Only stuff. It doesn't always work, but if you use it to ping every now and then, there's a chance those Member's Only videos might pop up.
