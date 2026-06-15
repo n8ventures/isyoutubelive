@@ -3,17 +3,50 @@ const { buildYouTubeURL } = require('./utils');
 const cheerio = require('cheerio');
 const needle = require('needle');
 
+function extractJsonAfter(body, marker) {
+	const start = body.indexOf(marker);
+	if (start === -1) return null;
+	const jsonStart = start + marker.length;
+	let depth = 0,
+		inString = false,
+		escape = false;
+	for (let i = jsonStart; i < body.length; i++) {
+		const ch = body[i];
+		if (escape) {
+			escape = false;
+			continue;
+		}
+		if (ch === '\\') {
+			escape = true;
+			continue;
+		}
+		if (ch === '"') {
+			inString = !inString;
+			continue;
+		}
+		if (inString) continue;
+		if (ch === '{') depth++;
+		else if (ch === '}') {
+			depth--;
+			if (depth === 0) return body.slice(jsonStart, i + 1);
+		}
+	}
+	return null;
+}
+
 async function checkLive(channelID) {
 	const yt_url = buildYouTubeURL(channelID, 'live');
 
 	const response = {
 		is_live: false,
+		is_upcoming: false,
 		title: null,
 		url: null,
+		videoId: null,
+		startTime: null,
 	};
 
 	try {
-		// use a browser-like user agent and accept-language to get consistent HTML from YouTube
 		const res = await needle('get', encodeURI(yt_url), {
 			follow_max: 3,
 			headers: {
@@ -22,46 +55,78 @@ async function checkLive(channelID) {
 				'Accept-Language': 'en-US,en;q=0.9',
 			},
 		});
-		const $ = cheerio.load(res.body);
+		const body = typeof res.body === 'string' ? res.body : res.body.toString('utf8');
 
-		let canonical = $('link[rel="canonical"]').attr('href');
-		const title = $('meta[name="title"]').attr('content');
-		let isLiveBroadcast =
-			$('meta[itemprop="isLiveBroadcast"]')?.attr('content')?.toLowerCase() === 'true';
-		const startDate = $('meta[itemprop="startDate"]').attr('content');
+		const playerJson = extractJsonAfter(body, 'var ytInitialPlayerResponse = ');
+		if (playerJson) {
+			const player = JSON.parse(playerJson);
+			const vd = player.videoDetails;
 
-		// Fallback: some channel/id URLs return minimal/JS-driven HTML; inspect raw body for indicators
-		if (!isLiveBroadcast && res.body) {
-			const body = typeof res.body === 'string' ? res.body : res.body.toString('utf8');
-			if (body.includes('"isLiveBroadcast":true') || /"isLive":\s*true/.test(body)) {
-				isLiveBroadcast = true;
-				// try to extract canonical/watch URL from raw HTML if cheerio didn't find it
-				const canonicalMatch = body.match(
-					/<link rel="canonical" href="(https:\/\/www\.youtube\.com\/watch\?v=[^"]+)"/,
-				);
-				if (canonicalMatch) canonical = canonicalMatch[1];
+			if (vd?.isLive === true) {
+				response.is_live = true;
+				response.title = vd.title ?? null;
+				response.videoId = vd.videoId ?? null;
+				response.url = vd.videoId ? `https://www.youtube.com/watch?v=${vd.videoId}` : null;
+				return response;
 			}
+
+			if (vd?.isUpcoming === true) {
+				const offlineSlate =
+					player.playabilityStatus?.liveStreamability?.liveStreamabilityRenderer
+						?.offlineSlate?.liveStreamOfflineSlateRenderer;
+				const scheduledStartTime = offlineSlate?.scheduledStartTime
+					? parseInt(offlineSlate.scheduledStartTime, 10) * 1000
+					: null;
+
+				const isFuture = scheduledStartTime ? scheduledStartTime > Date.now() : false;
+
+				if (isFuture) {
+					response.is_upcoming = true;
+					response.title = vd.title ?? null;
+					response.videoId = vd.videoId ?? null;
+					response.url = vd.videoId
+						? `https://www.youtube.com/watch?v=${vd.videoId}`
+						: null;
+					response.startTime = new Date(scheduledStartTime).toISOString();
+					return response;
+				}
+				// scheduledStartTime is in the past (or missing) - stale/never-started
+				// premiere; fall through to "not live"
+			}
+
+			response.title = 'Not live';
+			return response;
 		}
+
+		// No ytInitialPlayerResponse: most likely redirected to the channel's
+		// regular page because there's no active/scheduled live stream.
+		const $ = cheerio.load(body);
+		const canonical = $('link[rel="canonical"]').attr('href');
+		const title = $('meta[name="title"]').attr('content');
+		const isLiveBroadcast =
+			$('meta[itemprop="isLiveBroadcast"]')?.attr('content')?.toLowerCase() === 'true';
 
 		if (canonical?.startsWith('https://www.youtube.com/watch?v') && isLiveBroadcast) {
-			const startTime = startDate ? new Date(startDate) : null;
-			const now = new Date();
-
-			response.is_live = !startTime || startTime <= now;
-			response.title = title;
+			const videoIdMatch = canonical.match(/[?&]v=([^&]+)/);
+			response.is_live = true;
+			response.title = title ?? null;
 			response.url = canonical;
-		} else {
-			response.title = title || 'Not live';
-			response.url = canonical || null;
+			response.videoId = videoIdMatch ? videoIdMatch[1] : null;
+			return response;
 		}
 
+		response.title = title || 'Not live';
+		response.url = canonical || null;
 		return response;
 	} catch (error) {
 		console.error('[YT CHECK ERROR]', error);
 		return {
 			is_live: false,
+			is_upcoming: false,
 			title: 'API ERROR',
 			url: null,
+			videoId: null,
+			startTime: null,
 		};
 	}
 }
