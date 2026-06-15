@@ -80,12 +80,12 @@ async function checkShort(channelID, mode = true) {
 			if (!chosenReel) return response;
 		} else if (resolvedMode === 'membersOnly') {
 			chosenReel = reels.find((r) => isShortMembersOnly(r)) || null;
+			const { latestIsMembersOnly, ...clean } = response;
+			response = clean;
 			if (!chosenReel) {
 				response.warning = 'No members-only short found in the recent uploads.';
 				return response;
 			}
-			const { latestIsMembersOnly, ...clean } = response;
-			response = clean;
 		} else {
 			chosenReel = latest;
 			response.latestIsMembersOnly = Boolean(latestIsMembersOnly);
