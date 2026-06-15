@@ -13,7 +13,7 @@ export interface VideoData {
   publishedTime: string;
   videoId: string;
   isMembersOnly: boolean;
-  latestIsMembersOnly: boolean;
+  latestIsMembersOnly?: boolean;
   warning: string | null;
 }
 
