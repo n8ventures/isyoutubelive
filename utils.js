@@ -35,18 +35,12 @@ function buildYouTubeURL(channelID, type = 'videos') {
 
 function isMembersOnly(video) {
 	if (!video) return false;
-
-	return (
-		(video.badges ?? []).some(
-			(b) =>
-				b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_MEMBERS_ONLY' ||
-				b.metadataBadgeRenderer?.label === 'Members only',
-		) ||
-		(video.thumbnailOverlays ?? []).some(
-			(o) => o.thumbnailOverlayTimeStatusRenderer?.style === 'MEMBERS_ONLY',
-		) ||
-		video.publishedTimeText == null
+	const hasMembersBadge = (video.badges ?? []).some(
+		(b) =>
+			b.metadataBadgeRenderer?.style === 'BADGE_MEMBERS_ONLY' ||
+			b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_MEMBERS_ONLY' ||
+			b.metadataBadgeRenderer?.label === 'Members only',
 	);
+	return hasMembersBadge;
 }
-
 module.exports = { buildYouTubeURL, isMembersOnly };
