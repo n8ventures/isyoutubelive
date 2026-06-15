@@ -35,8 +35,8 @@
 		"youtube-livestream"
 	],
 	"dependencies": {
-		"cheerio": "^1.1.2",
-		"needle": "^3.3.1"
+		"cheerio": "^1.2.0",
+		"needle": "^3.5.0"
 	},
 	"files": [
 		"index.js",
