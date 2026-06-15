@@ -12,41 +12,54 @@ Originally created by [Amith VP](https://github.com/amith-vp), maintained and ex
 [![NPM](https://nodei.co/npm/@n8ventures/isyoutubelive.png?compact=true)](https://npmjs.org/package/@n8ventures/isyoutubelive)
 
 
-NPM Module to check whether YouTube channel is live or not . WITHOUT YOUTUBE API KEY <br>
+NPM Module to check whether YouTube channel is live or not. WITHOUT YOUTUBE API KEY <br>
 Return object with live status, video title, video url.
 
-Now also returns latest YouTube channel upload with `checkVideo(channelID)` and latest YouTube short with `checkShort(channelID)`
+Now also returns latest YouTube channel upload with `checkVideo(channel)` and latest YouTube short with `checkShort(channel)`
 
 
-## :floppy_disk: Installation
+## Installation
 
 ``` bash
 npm i @n8ventures/isyoutubelive
 ```
 
-## :feet: Usage
+## Usage
+
 
 ```js
 const { checkLive, checkVideo, checkShort } = require("@n8ventures/isyoutubelive")
 
-const channelID = '@LinusTechTips'; // Can be Channel ID, @Handle, YT URLs
+const channel = '@LinusTechTips'; // Can be Channel ID, @Handle, YT URLs
 
-const liveData = await checkLive(channelID);
+const liveData = await checkLive(channel);
 console.log('Live Data:', liveData);
 
-const videoData = await checkVideo(channelID);
+const videoData = await checkVideo(channel);
 console.log('Latest Video:', videoData);
 
-const shortData = await checkShort(channelID);
+const shortData = await checkShort(channel);
 console.log('Latest Short:', shortData);
+```
+
+Supported `channel` formats:
+
+```js
+'@LinusTechTips'
+'UCXuqSBlHAE6Xw-yeJA0Tunw'
+'https://www.youtube.com/@LinusTechTips'
+'https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw'
 ```
 
 `checkLive()` returns 
 ```js
 {
   is_live: boolean,
-  title: string || 'Not live'
-  url: string
+  is_upcoming: boolean,
+  title: string,
+  url: string | null,
+  videoId: string | null,
+  startTime: string | null,
 } 
 ```
 
@@ -58,7 +71,7 @@ console.log('Latest Short:', shortData);
   publishedTime: string,
   videoId: string,
   isMembersOnly: boolean,
-  latestIsMembersOnly: boolean,
+  latestIsMembersOnly?: boolean,
   warning: string | null,
 } 
 ```
@@ -71,14 +84,57 @@ console.log('Latest Short:', shortData);
   publishedTime: string,
   videoId: string,
   isMembersOnly: boolean,
-  latestIsMembersOnly: boolean,
+  latestIsMembersOnly?: boolean,
   warning: string | null,
 } 
 ```
 
-Note, if you want the possibility of including Member's Only videos/shorts, you can use:
+If you want the possibility of including Members Only videos/shorts, you can use `mode=false` meaning it should try to detect Members Only stuff. Due to how YouTube exposes channel data, detection of members-only uploads is not guaranteed in all cases.
 ```js
-await checkVideo(channelID, false);
-await checkShort(channelID, false);
+await checkVideo(channel, false);
+await checkShort(channel, false);
 ```
-`public=false` meaning it should try to detect Member's Only stuff. It doesn't always work, but if you use it to ping every now and then, there's a chance those Member's Only videos might pop up.
+
+`mode='membersOnly'` will only capture Members Only content. However this will not include the `latestIsMembersOnly` field.
+```js
+await checkVideo(channel, 'membersOnly');
+await checkShort(channel, 'membersOnly');
+```
+
+More info below
+
+### Members-only mode
+
+When using:
+
+```js
+await checkVideo(channel, 'membersOnly');
+```
+
+or
+
+```js
+await checkShort(channel, 'membersOnly');
+```
+
+the returned object will not include:
+
+```js
+latestIsMembersOnly
+```
+
+because all returned results are already members-only content.
+
+# Additional information
+
+`warning` contains additional information when the package encounters limitations while detecting content. Otherwise it will be `null`.
+
+`startTime` is an ISO 8601 timestamp and is only available for upcoming streams.
+
+Example:
+
+```js
+{
+  startTime: '2026-06-17T14:00:00.000Z'
+}
+```
