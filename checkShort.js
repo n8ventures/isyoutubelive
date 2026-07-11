@@ -1,4 +1,4 @@
-const { buildYouTubeURL } = require('./utils');
+const { buildYouTubeURL, parseYouTubeDate, pickMostRecent } = require('./utils');
 const needle = require('needle');
 
 async function getShortPublishedTime(videoId) {
@@ -17,6 +17,7 @@ async function getShortPublishedTime(videoId) {
 		)?.videoPrimaryInfoRenderer;
 
 		if (!videoPrimaryInfo) return null;
+
 		return (
 			videoPrimaryInfo.dateText?.simpleText ||
 			videoPrimaryInfo.dateText?.runs?.[0]?.text ||
@@ -44,6 +45,28 @@ function normalizeShort(item) {
 	};
 }
 
+// How many top-of-grid candidates to actually verify by fetching a real
+// date. Higher = more accurate, but more requests per check.
+const CANDIDATE_POOL_SIZE = 4;
+
+async function resolveMostRecent(candidates) {
+	const pool = candidates.slice(0, CANDIDATE_POOL_SIZE);
+
+	const withDates = await Promise.all(
+		pool.map(async (reel) => ({
+			...reel,
+			_publishedTime: await getShortPublishedTime(reel.videoId),
+		})),
+	);
+
+	const withParsedDates = withDates.map((r) => ({
+		...r,
+		_parsedDate: parseYouTubeDate(r._publishedTime),
+	}));
+
+	return pickMostRecent(withParsedDates) || candidates[0] || null;
+}
+
 async function checkShort(channelID, mode = true) {
 	const yt_url = buildYouTubeURL(channelID, 'shorts');
 	let response = {
@@ -68,26 +91,26 @@ async function checkShort(channelID, mode = true) {
 		)?.tabRenderer?.content?.richGridRenderer?.contents;
 
 		const reels = (grid || []).map(normalizeShort).filter(Boolean);
-		const latest = reels[0];
-		const latestIsMembersOnly = isShortMembersOnly(latest);
-
 		const resolvedMode = mode === true ? 'public' : mode === false ? 'all' : mode;
 
 		let chosenReel = null;
 
 		if (resolvedMode === 'public') {
-			chosenReel = reels.find((r) => !isShortMembersOnly(r)) || null;
-			if (!chosenReel) return response;
+			const publicReels = reels.filter((r) => !isShortMembersOnly(r));
+			if (!publicReels.length) return response;
+			chosenReel = await resolveMostRecent(publicReels);
 		} else if (resolvedMode === 'membersOnly') {
-			chosenReel = reels.find((r) => isShortMembersOnly(r)) || null;
+			const membersReels = reels.filter((r) => isShortMembersOnly(r));
 			const { latestIsMembersOnly, ...clean } = response;
 			response = clean;
-			if (!chosenReel) {
+			if (!membersReels.length) {
 				response.warning = 'No members-only short found in the recent uploads.';
 				return response;
 			}
+			chosenReel = await resolveMostRecent(membersReels);
 		} else {
-			chosenReel = latest;
+			chosenReel = await resolveMostRecent(reels);
+			const latestIsMembersOnly = isShortMembersOnly(reels[0]);
 			response.latestIsMembersOnly = Boolean(latestIsMembersOnly);
 			if (latestIsMembersOnly) {
 				response.warning =
@@ -104,7 +127,9 @@ async function checkShort(channelID, mode = true) {
 		response.url = `https://www.youtube.com/watch?v=${videoId}`;
 		response.videoId = videoId;
 		response.isMembersOnly = isShortMembersOnly(chosenReel);
-		response.publishedTime = await getShortPublishedTime(videoId);
+		response.publishedTime =
+			chosenReel._publishedTime ?? (await getShortPublishedTime(videoId));
+
 		return response;
 	} catch (error) {
 		console.error('[YT SHORTS CHECK ERROR]', error.message);

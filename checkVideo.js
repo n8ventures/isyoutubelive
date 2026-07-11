@@ -1,5 +1,9 @@
-const { buildYouTubeURL, isMembersOnly } = require('./utils');
-
+const {
+	buildYouTubeURL,
+	isMembersOnly,
+	parseYouTubeDate,
+	pickMostRecent,
+} = require('./utils');
 const needle = require('needle');
 
 async function checkVideo(channelID, mode = true) {
@@ -39,10 +43,7 @@ async function checkVideo(channelID, mode = true) {
 				const vm = b.badgeViewModel;
 				if (vm) {
 					badges.push({
-						metadataBadgeRenderer: {
-							style: vm.badgeStyle,
-							label: vm.badgeText,
-						},
+						metadataBadgeRenderer: { style: vm.badgeStyle, label: vm.badgeText },
 					});
 				}
 			}
@@ -53,6 +54,7 @@ async function checkVideo(channelID, mode = true) {
 			title: { runs: [{ text: title }] },
 			publishedTimeText: publishedTime ? { simpleText: publishedTime } : null,
 			badges,
+			_parsedDate: parseYouTubeDate(publishedTime),
 		};
 	}
 
@@ -70,7 +72,7 @@ async function checkVideo(channelID, mode = true) {
 			.map((item) => normalizeLockupVideo(item?.richItemRenderer?.content?.lockupViewModel))
 			.filter(Boolean);
 
-		const latest = videos[0];
+		const latest = pickMostRecent(videos);
 		const latestIsMembersOnly = isMembersOnly(latest);
 
 		// normalize legacy boolean usage
@@ -79,10 +81,10 @@ async function checkVideo(channelID, mode = true) {
 		let chosenVideo = null;
 
 		if (resolvedMode === 'public') {
-			chosenVideo = videos.find((video) => !isMembersOnly(video)) || null;
+			chosenVideo = pickMostRecent(videos.filter((v) => !isMembersOnly(v)));
 			if (!chosenVideo) return response;
 		} else if (resolvedMode === 'membersOnly') {
-			chosenVideo = videos.find((video) => isMembersOnly(video)) || null;
+			chosenVideo = pickMostRecent(videos.filter((v) => isMembersOnly(v)));
 			const { latestIsMembersOnly, ...clean } = response;
 			response = clean;
 			if (!chosenVideo) {
