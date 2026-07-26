@@ -1,8 +1,4 @@
 function buildYouTubeURL(channelID, type = 'videos') {
-	if (type === 'live') {
-		type = 'stream';
-	}
-
 	channelID = channelID.trim();
 	const base = 'https://www.youtube.com';
 
@@ -97,4 +93,9 @@ function pickMostRecent(items) {
 	return best;
 }
 
-module.exports = { buildYouTubeURL, isMembersOnly, parseYouTubeDate, pickMostRecent };
+module.exports = {
+	buildYouTubeURL,
+	isMembersOnly,
+	parseYouTubeDate,
+	pickMostRecent,
+};
