@@ -1,6 +1,5 @@
 const { buildYouTubeURL } = require('./utils');
 
-const cheerio = require('cheerio');
 const needle = require('needle');
 
 function extractJsonAfter(body, marker) {
@@ -100,23 +99,25 @@ async function checkLive(channelID) {
 
 		// No ytInitialPlayerResponse: most likely redirected to the channel's
 		// regular page because there's no active/scheduled live stream.
-		const $ = cheerio.load(body);
-		const canonical = $('link[rel="canonical"]').attr('href');
-		const title = $('meta[name="title"]').attr('content');
-		const isLiveBroadcast =
-			$('meta[itemprop="isLiveBroadcast"]')?.attr('content')?.toLowerCase() === 'true';
+		const canonicalMatch = body.match(/<link rel="canonical" href="([^"]+)"/);
+		const canonical = canonicalMatch?.[1] ?? null;
+
+		const titleMatch = body.match(/<meta name="title" content="([^"]*)"/);
+		const title = titleMatch?.[1] ?? null;
+
+		const isLiveBroadcast = /<meta itemprop="isLiveBroadcast" content="true"/.test(body);
 
 		if (canonical?.startsWith('https://www.youtube.com/watch?v') && isLiveBroadcast) {
 			const videoIdMatch = canonical.match(/[?&]v=([^&]+)/);
 			response.is_live = true;
-			response.title = title ?? null;
+			response.title = title;
 			response.url = canonical;
 			response.videoId = videoIdMatch ? videoIdMatch[1] : null;
 			return response;
 		}
 
 		response.title = title || 'Not live';
-		response.url = canonical || null;
+		response.url = canonical;
 		return response;
 	} catch (error) {
 		console.error('[YT CHECK ERROR]', error);
